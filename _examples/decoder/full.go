@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/amerium/form"
+	"github.com/amerium/form/v6"
 )
 
 // <form method="POST">

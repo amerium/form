@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/amerium/form"
+	"github.com/amerium/form/v6"
 	assert "github.com/stretchr/testify/assert"
 )
 

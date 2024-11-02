@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/amerium/form"
+	"github.com/amerium/form/v6"
 )
 
 // Address contains address information

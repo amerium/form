@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/amerium/form"
+	"github.com/amerium/form/v6"
 )
 
 // Simple Benchmarks

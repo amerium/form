@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/amerium/form"
-	"github.com/amerium/form/internal"
+	"github.com/amerium/form/v6"
+	"github.com/amerium/form/v6/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

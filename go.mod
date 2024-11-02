@@ -1,4 +1,4 @@
-module github.com/amerium/form
+module github.com/amerium/form/v6
 
 go 1.20
 
