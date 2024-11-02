@@ -17,18 +17,19 @@ const (
 	errMissingEndBracket   = "invalid formatting for key '%s' missing ']' bracket"
 )
 
-type decoder struct {
-	d         *Decoder
-	errs      DecodeErrors
-	dm        dataMap
-	dmDone    bool
-	values    url.Values
-	goValues  map[string]interface{}
-	maxKeyLen int
-	namespace []byte
+type decoder[DecodeFuncArgument any] struct {
+	d                  *Decoder[DecodeFuncArgument]
+	errs               DecodeErrors
+	dm                 dataMap
+	dmDone             bool
+	values             url.Values
+	goValues           map[string]interface{}
+	maxKeyLen          int
+	namespace          []byte
+	decodeFuncArgument DecodeFuncArgument
 }
 
-func (d *decoder) setError(namespace []byte, err error) {
+func (d *decoder[DecodeFuncArgument]) setError(namespace []byte, err error) {
 	if d.errs == nil {
 		d.errs = make(DecodeErrors)
 	}
@@ -36,7 +37,7 @@ func (d *decoder) setError(namespace []byte, err error) {
 	d.errs[string(namespace)] = err
 }
 
-func (d *decoder) findAlias(ns string) *recursiveData {
+func (d *decoder[DecodeFuncArgument]) findAlias(ns string) *recursiveData {
 	for i := 0; i < len(d.dm); i++ {
 		if d.dm[i].alias == ns {
 			return d.dm[i]
@@ -46,7 +47,7 @@ func (d *decoder) findAlias(ns string) *recursiveData {
 	return nil
 }
 
-func (d *decoder) parseMapData() error {
+func (d *decoder[DecodeFuncArgument]) parseMapData() error {
 	// already parsed
 	if d.dmDone {
 		return nil
@@ -147,7 +148,7 @@ func (d *decoder) parseMapData() error {
 	return nil
 }
 
-func (d *decoder) traverseStruct(v reflect.Value, typ reflect.Type, namespace []byte) (set bool) {
+func (d *decoder[DecodeFuncArgument]) traverseStruct(v reflect.Value, typ reflect.Type, namespace []byte) (set bool) {
 	l := len(namespace)
 	first := l == 0
 
@@ -198,14 +199,14 @@ func (d *decoder) traverseStruct(v reflect.Value, typ reflect.Type, namespace []
 }
 
 //nolint:maintidx // This function is indeed a bit large, but sequentially structured.
-func (d *decoder) setFieldByType(current reflect.Value, isPtr bool, namespace []byte, idx int) bool {
+func (d *decoder[DecodeFuncArgument]) setFieldByType(current reflect.Value, isPtr bool, namespace []byte, idx int) bool {
 	v, kind := ExtractType(current)
 	arr, ok := d.values[string(namespace)]
 
 	if d.d.customTypeFuncs != nil {
 		if ok {
 			if cf, ok := d.d.customTypeFuncs[v.Type()]; ok {
-				val, err := cf(arr[idx])
+				val, err := cf(arr[idx], d.decodeFuncArgument)
 				if err != nil {
 					d.setError(namespace, err)
 
@@ -746,12 +747,12 @@ func (d *decoder) setFieldByType(current reflect.Value, isPtr bool, namespace []
 	return false
 }
 
-func (d *decoder) getMapKey(key string, current reflect.Value, namespace []byte) (err error) {
+func (d *decoder[DecodeFuncArgument]) getMapKey(key string, current reflect.Value, namespace []byte) (err error) {
 	v, kind := ExtractType(current)
 
 	if d.d.customTypeFuncs != nil {
 		if cf, ok := d.d.customTypeFuncs[v.Type()]; ok {
-			val, er := cf(key)
+			val, er := cf(key, d.decodeFuncArgument)
 			if er != nil {
 				err = er
 

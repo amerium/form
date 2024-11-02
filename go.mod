@@ -1,6 +1,6 @@
 module github.com/swaggest/form/v5
 
-go 1.13
+go 1.20
 
 require (
 	github.com/bool64/dev v0.2.25
