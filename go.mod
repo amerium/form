@@ -1,10 +1,11 @@
-module github.com/swaggest/form/v5
+module github.com/amerium/form
 
 go 1.20
 
 require (
 	github.com/bool64/dev v0.2.25
 	github.com/stretchr/testify v1.4.0
+	github.com/swaggest/form/v5 v5.1.1
 )
 
 require (
