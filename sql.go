@@ -9,9 +9,9 @@ import (
 )
 
 // RegisterSQLNullTypesDecodeFunc adds decoding support for sql.Null* types.
-func RegisterSQLNullTypesDecodeFunc(
+func RegisterSQLNullTypesDecodeFunc[Argument any](
 	d interface {
-		RegisterFunc(fn DecodeFunc, types ...reflect.Type)
+		RegisterFunc(fn DecodeFunc[Argument], types ...reflect.Type)
 	},
 	nullValues ...string,
 ) {
@@ -19,7 +19,7 @@ func RegisterSQLNullTypesDecodeFunc(
 		nullValues = []string{"NULL"}
 	}
 
-	d.RegisterFunc(func(val string) (interface{}, error) {
+	d.RegisterFunc(func(val string, argument Argument) (interface{}, error) {
 		for _, null := range nullValues {
 			if null == val {
 				return sql.NullString{}, nil
@@ -29,7 +29,7 @@ func RegisterSQLNullTypesDecodeFunc(
 		return sql.NullString{String: val, Valid: true}, nil
 	}, reflect.TypeOf(sql.NullString{}))
 
-	d.RegisterFunc(func(val string) (interface{}, error) {
+	d.RegisterFunc(func(val string, argument Argument) (interface{}, error) {
 		for _, null := range nullValues {
 			if null == val {
 				return sql.NullInt64{}, nil
@@ -44,7 +44,7 @@ func RegisterSQLNullTypesDecodeFunc(
 		return sql.NullInt64{Int64: i, Valid: true}, nil
 	}, reflect.TypeOf(sql.NullInt64{}))
 
-	d.RegisterFunc(func(val string) (interface{}, error) {
+	d.RegisterFunc(func(val string, argument Argument) (interface{}, error) {
 		if len(val) < 1 {
 			return nil, errors.New("no value received")
 		}
@@ -62,7 +62,7 @@ func RegisterSQLNullTypesDecodeFunc(
 		return sql.NullFloat64{Float64: f, Valid: true}, nil
 	}, reflect.TypeOf(sql.NullFloat64{}))
 
-	d.RegisterFunc(func(val string) (interface{}, error) {
+	d.RegisterFunc(func(val string, argument Argument) (interface{}, error) {
 		for _, null := range nullValues {
 			if null == val {
 				return sql.NullBool{}, nil

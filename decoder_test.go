@@ -69,8 +69,8 @@ func TestDecoderInt(t *testing.T) {
 
 	test.IntArray = make([]int, 4)
 
-	decoder := NewDecoder()
-	errs := decoder.Decode(&test, values)
+	decoder := NewDecoder[any]()
+	errs := decoder.Decode(&test, values, nil)
 	Equal(t, errs, nil)
 
 	Equal(t, test.Int, int(3))
@@ -189,8 +189,8 @@ func TestDecoderUint(t *testing.T) {
 
 	test.UintArray = make([]uint, 4)
 
-	decoder := NewDecoder()
-	errs := decoder.Decode(&test, values)
+	decoder := NewDecoder[any]()
+	errs := decoder.Decode(&test, values, nil)
 	Equal(t, errs, nil)
 
 	Equal(t, test.Uint, uint(3))
@@ -288,8 +288,8 @@ func TestDecoderString(t *testing.T) {
 
 	test.StringArray = make([]string, 4)
 
-	decoder := NewDecoder()
-	errs := decoder.Decode(&test, values)
+	decoder := NewDecoder[any]()
+	errs := decoder.Decode(&test, values, nil)
 	Equal(t, errs, nil)
 
 	Equal(t, test.String, "3")
@@ -378,8 +378,8 @@ func TestDecoderFloat(t *testing.T) {
 
 	test.Float32Array = make([]float32, 4)
 
-	decoder := NewDecoder()
-	errs := decoder.Decode(&test, values)
+	decoder := NewDecoder[any]()
+	errs := decoder.Decode(&test, values, nil)
 	Equal(t, errs, nil)
 
 	Equal(t, test.Float32, float32(3.3))
@@ -469,8 +469,8 @@ func TestDecoderBool(t *testing.T) {
 
 	test.BoolArray = make([]bool, 4)
 
-	decoder := NewDecoder()
-	errs := decoder.Decode(&test, values)
+	decoder := NewDecoder[any]()
+	errs := decoder.Decode(&test, values, nil)
 	Equal(t, errs, nil)
 
 	Equal(t, test.Bool, true)
@@ -554,13 +554,13 @@ func TestDecoderEqualStructMapValue(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("Namespace_%s%s", tc.NamespacePrefix, tc.NamespaceSuffix), func(t *testing.T) {
-			decoder := NewDecoder()
+			decoder := NewDecoder[any]()
 			decoder.SetNamespacePrefix(tc.NamespacePrefix)
 			decoder.SetNamespaceSuffix(tc.NamespaceSuffix)
 
 			var test TestStruct
 
-			err := decoder.Decode(&test, tc.Values)
+			err := decoder.Decode(&test, tc.Values, nil)
 			Equal(t, err, nil)
 
 			Equal(t, test.PhoneStruct.Number, "111")
@@ -691,7 +691,7 @@ func TestDecoderStruct(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("Namespace_%s%s", tc.NamespacePrefix, tc.NamespaceSuffix), func(t *testing.T) {
-			decoder := NewDecoder()
+			decoder := NewDecoder[any]()
 			decoder.SetNamespacePrefix(tc.NamespacePrefix)
 			decoder.SetNamespaceSuffix(tc.NamespaceSuffix)
 
@@ -705,7 +705,7 @@ func TestDecoderStruct(t *testing.T) {
 			}
 
 			decoder.SetTagName("form")
-			decoder.RegisterFunc(func(val string) (interface{}, error) {
+			decoder.RegisterFunc(func(val string, arg any) (interface{}, error) {
 				return time.Parse("2006-01-02", val)
 			}, reflect.TypeOf(time.Time{}))
 
@@ -722,7 +722,7 @@ func TestDecoderStruct(t *testing.T) {
 			test.ExistingArray = []string{"arr1"}
 			test.ExistingArrayIndex = []string{"arr1"}
 
-			errs := decoder.Decode(&test, values)
+			errs := decoder.Decode(&test, values, nil)
 			Equal(t, errs, nil)
 
 			Equal(t, test.Name, "joeybloggs")
@@ -790,7 +790,7 @@ func TestDecoderStruct(t *testing.T) {
 				unexposed string
 			}{}
 
-			errs = decoder.Decode(&s, defaultValues)
+			errs = decoder.Decode(&s, defaultValues, nil)
 			Equal(t, errs, nil)
 			Equal(t, s.Value, "")
 			Equal(t, s.Ignore, "")
@@ -831,9 +831,9 @@ func TestDecoderNativeTime(t *testing.T) {
 
 	var test TestError
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 
-	errs := decoder.Decode(&test, values)
+	errs := decoder.Decode(&test, values, nil)
 	Equal(t, errs, nil)
 
 	tm, _ := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
@@ -924,12 +924,12 @@ func TestDecoderErrors(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("Namespace_%s%s", tc.NamespacePrefix, tc.NamespaceSuffix), func(t *testing.T) {
-			decoder := NewDecoder()
+			decoder := NewDecoder[any]()
 			decoder.SetNamespacePrefix(tc.NamespacePrefix)
 			decoder.SetNamespaceSuffix(tc.NamespaceSuffix)
 
 			decoder.SetMaxArraySize(4)
-			decoder.RegisterFunc(func(val string) (interface{}, error) {
+			decoder.RegisterFunc(func(val string, arg any) (interface{}, error) {
 				return nil, errors.New("bad type conversion")
 			}, reflect.TypeOf(""))
 
@@ -937,7 +937,7 @@ func TestDecoderErrors(t *testing.T) {
 				OverFlowExistingArray: make([]int, 2),
 			}
 
-			errs := decoder.Decode(&test, values)
+			errs := decoder.Decode(&test, values, nil)
 			NotEqual(t, errs, nil)
 
 			e := errs.Error()
@@ -1045,14 +1045,14 @@ func TestDecoderErrors(t *testing.T) {
 
 			var (
 				test2    TestError2
-				decoder2 = NewDecoder()
+				decoder2 = NewDecoder[any]()
 			)
 
-			decoder2.RegisterFunc(func(val string) (interface{}, error) {
+			decoder2.RegisterFunc(func(val string, arg any) (interface{}, error) {
 				return time.Parse("2006-01-02", val)
 			}, reflect.TypeOf(time.Time{}))
 
-			errs = decoder2.Decode(&test2, values2)
+			errs = decoder2.Decode(&test2, values2, nil)
 			NotEqual(t, errs, nil)
 
 			e = errs.Error()
@@ -1071,65 +1071,65 @@ func TestDecodeAllTypes(t *testing.T) {
 		"": []string{"3"},
 	}
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 
 	var i int
 
-	errs := decoder.Decode(&i, values)
+	errs := decoder.Decode(&i, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, i, 3)
 
 	var i8 int
 
-	errs = decoder.Decode(&i8, values)
+	errs = decoder.Decode(&i8, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, i8, 3)
 
 	var i16 int
 
-	errs = decoder.Decode(&i16, values)
+	errs = decoder.Decode(&i16, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, i16, 3)
 
 	var i32 int
 
-	errs = decoder.Decode(&i32, values)
+	errs = decoder.Decode(&i32, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, i32, 3)
 
 	var i64 int
 
-	errs = decoder.Decode(&i64, values)
+	errs = decoder.Decode(&i64, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, i64, 3)
 
 	var ui int
 
-	errs = decoder.Decode(&ui, values)
+	errs = decoder.Decode(&ui, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, ui, 3)
 
 	var ui8 int
 
-	errs = decoder.Decode(&ui8, values)
+	errs = decoder.Decode(&ui8, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, ui8, 3)
 
 	var ui16 int
 
-	errs = decoder.Decode(&ui16, values)
+	errs = decoder.Decode(&ui16, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, ui16, 3)
 
 	var ui32 int
 
-	errs = decoder.Decode(&ui32, values)
+	errs = decoder.Decode(&ui32, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, ui32, 3)
 
 	var ui64 int
 
-	errs = decoder.Decode(&ui64, values)
+	errs = decoder.Decode(&ui64, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, ui64, 3)
 
@@ -1139,13 +1139,13 @@ func TestDecodeAllTypes(t *testing.T) {
 
 	var f32 float32
 
-	errs = decoder.Decode(&f32, values)
+	errs = decoder.Decode(&f32, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, f32, float32(3.4))
 
 	var f64 float64
 
-	errs = decoder.Decode(&f64, values)
+	errs = decoder.Decode(&f64, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, f64, float64(3.4))
 
@@ -1155,7 +1155,7 @@ func TestDecodeAllTypes(t *testing.T) {
 
 	var b bool
 
-	errs = decoder.Decode(&b, values)
+	errs = decoder.Decode(&b, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, b, true)
 
@@ -1167,7 +1167,7 @@ func TestDecodeAllTypes(t *testing.T) {
 
 	var dt time.Time
 
-	errs = decoder.Decode(&dt, values)
+	errs = decoder.Decode(&dt, values, nil)
 
 	Equal(t, errs, nil)
 	Equal(t, dt, tm)
@@ -1179,7 +1179,7 @@ func TestDecodeAllTypes(t *testing.T) {
 	// basic array
 	var arr []string
 
-	errs = decoder.Decode(&arr, values)
+	errs = decoder.Decode(&arr, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(arr), 2)
 	Equal(t, arr[0], "arr1")
@@ -1188,7 +1188,7 @@ func TestDecodeAllTypes(t *testing.T) {
 	// pre-populated array
 
 	// fmt.Println("Decoding...")
-	errs = decoder.Decode(&arr, values)
+	errs = decoder.Decode(&arr, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(arr), 4)
 	Equal(t, arr[0], "arr1")
@@ -1199,7 +1199,7 @@ func TestDecodeAllTypes(t *testing.T) {
 	// basic array Ptr
 	var arrPtr []*string
 
-	errs = decoder.Decode(&arrPtr, values)
+	errs = decoder.Decode(&arrPtr, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(arrPtr), 2)
 	Equal(t, *arrPtr[0], "arr1")
@@ -1208,7 +1208,7 @@ func TestDecodeAllTypes(t *testing.T) {
 	// pre-populated array Ptr
 
 	// fmt.Println("Decoding...")
-	errs = decoder.Decode(&arrPtr, values)
+	errs = decoder.Decode(&arrPtr, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(arr), 4)
 	Equal(t, *arrPtr[0], "arr1")
@@ -1223,7 +1223,7 @@ func TestDecodeAllTypes(t *testing.T) {
 		"[1]": []string{"newVal2"},
 	}
 
-	errs = decoder.Decode(&arr, values)
+	errs = decoder.Decode(&arr, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(arr), 4)
 	Equal(t, arr[0], "newVal1")
@@ -1239,7 +1239,7 @@ func TestDecodeAllTypes(t *testing.T) {
 	// basic map
 	var m map[string]string
 
-	errs = decoder.Decode(&m, values)
+	errs = decoder.Decode(&m, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(m), 2)
 	Equal(t, m["key1"], "val1")
@@ -1247,7 +1247,7 @@ func TestDecodeAllTypes(t *testing.T) {
 
 	// existing map
 
-	errs = decoder.Decode(&m, values)
+	errs = decoder.Decode(&m, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(m), 2)
 	Equal(t, m["key1"], "val1")
@@ -1258,7 +1258,7 @@ func TestDecodeAllTypes(t *testing.T) {
 	values = url.Values{
 		"[key3]": []string{"val3"},
 	}
-	errs = decoder.Decode(&m, values)
+	errs = decoder.Decode(&m, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(m), 3)
 	Equal(t, m["key3"], "val3")
@@ -1279,7 +1279,7 @@ func TestDecodeAllTypes(t *testing.T) {
 
 	var phones []Phone
 
-	errs = decoder.Decode(&phones, values)
+	errs = decoder.Decode(&phones, values, nil)
 	Equal(t, errs, nil)
 	Equal(t, len(phones), 2)
 	Equal(t, phones[0].Number, "999")
@@ -1307,19 +1307,19 @@ func TestDecoderFailsAndBadValues(t *testing.T) {
 
 	var test TestError
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 
-	EqualError(t, decoder.Decode(&test, values), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone[0.Number' missing ']' bracket")
+	EqualError(t, decoder.Decode(&test, values, nil), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone[0.Number' missing ']' bracket")
 
 	i := 1
-	err := decoder.Decode(i, values)
+	err := decoder.Decode(i, values, nil)
 	NotEqual(t, err, nil)
 
 	_, ok := err.(*InvalidDecoderError)
 	Equal(t, ok, true)
 	Equal(t, err.Error(), "form: Decode(non-pointer int)")
 
-	err = decoder.Decode(nil, values)
+	err = decoder.Decode(nil, values, nil)
 	NotEqual(t, err, nil)
 
 	_, ok = err.(*InvalidDecoderError)
@@ -1328,7 +1328,7 @@ func TestDecoderFailsAndBadValues(t *testing.T) {
 
 	var ts *TestError
 
-	err = decoder.Decode(ts, values)
+	err = decoder.Decode(ts, values, nil)
 	NotEqual(t, err, nil)
 
 	_, ok = err.(*InvalidDecoderError)
@@ -1339,19 +1339,19 @@ func TestDecoderFailsAndBadValues(t *testing.T) {
 		"Phone0].Number": []string{"1(111)111-1111"},
 	}
 
-	EqualError(t, decoder.Decode(&test, values), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone0].Number' missing '[' bracket")
+	EqualError(t, decoder.Decode(&test, values, nil), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone0].Number' missing '[' bracket")
 
 	values = url.Values{
 		"Phone[[0.Number": []string{"1(111)111-1111"},
 	}
 
-	EqualError(t, decoder.Decode(&test, values), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone[[0.Number' missing ']' bracket")
+	EqualError(t, decoder.Decode(&test, values, nil), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone[[0.Number' missing ']' bracket")
 
 	values = url.Values{
 		"Phone0]].Number": []string{"1(111)111-1111"},
 	}
 
-	EqualError(t, decoder.Decode(&test, values), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone0]].Number' missing '[' bracket")
+	EqualError(t, decoder.Decode(&test, values, nil), "Field Namespace:Phone ERROR:failed to parse map data: invalid formatting for key 'Phone0]].Number' missing '[' bracket")
 }
 
 func TestDecoderMapKeys(t *testing.T) {
@@ -1399,11 +1399,11 @@ func TestDecoderMapKeys(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("Namespace_%s%s", tc.NamespacePrefix, tc.NamespaceSuffix), func(t *testing.T) {
-			decoder := NewDecoder()
+			decoder := NewDecoder[any]()
 			decoder.SetNamespacePrefix(tc.NamespacePrefix)
 			decoder.SetNamespaceSuffix(tc.NamespaceSuffix)
 
-			errs := decoder.Decode(&test, values)
+			errs := decoder.Decode(&test, values, nil)
 			Equal(t, errs, nil)
 
 			Equal(t, test.MapIfaceKey["key"], "3")
@@ -1474,13 +1474,13 @@ func TestDecoderStructRecursion(t *testing.T) {
 				values[key] = vals
 			}
 
-			decoder := NewDecoder()
+			decoder := NewDecoder[any]()
 			decoder.SetNamespacePrefix(tc.NamespacePrefix)
 			decoder.SetNamespaceSuffix(tc.NamespaceSuffix)
 
 			var test TestRecursive
 
-			errs := decoder.Decode(&test, values)
+			errs := decoder.Decode(&test, values, nil)
 			Equal(t, errs, nil)
 
 			Equal(t, test.Nested.Value, "value")
@@ -1511,16 +1511,16 @@ func TestDecoderFormDecode(t *testing.T) {
 		"Foo": {"foo-is-set"},
 	}
 
-	fd := NewDecoder()
+	fd := NewDecoder[any]()
 
 	dst := Struct2Wrapper{}
-	err := fd.Decode(&dst, sliceValues)
+	err := fd.Decode(&dst, sliceValues, nil)
 	Equal(t, err, nil)
 	NotEqual(t, dst.InnerSlice, nil)
 	Equal(t, dst.InnerSlice[0].Foo, "foo-is-set")
 
 	dst2 := Struct2{}
-	err = fd.Decode(&dst2, singleValues)
+	err = fd.Decode(&dst2, singleValues, nil)
 	Equal(t, err, nil)
 	Equal(t, dst2.Foo, "foo-is-set")
 }
@@ -1539,9 +1539,9 @@ func TestDecoderArrayKeysSort(t *testing.T) {
 
 	var test Struct
 
-	d := NewDecoder()
+	d := NewDecoder[any]()
 
-	err := d.Decode(&test, values)
+	err := d.Decode(&test, values, nil)
 	Equal(t, err, nil)
 
 	Equal(t, len(test.Array), 11)
@@ -1562,9 +1562,9 @@ func TestDecoderIncreasingKeys(t *testing.T) {
 
 	var test Struct
 
-	d := NewDecoder()
+	d := NewDecoder[any]()
 
-	err := d.Decode(&test, values)
+	err := d.Decode(&test, values, nil)
 	Equal(t, err, nil)
 
 	Equal(t, len(test.Array), 3)
@@ -1574,7 +1574,7 @@ func TestDecoderIncreasingKeys(t *testing.T) {
 
 	var test2 Struct
 
-	err = d.Decode(&test2, values)
+	err = d.Decode(&test2, values, nil)
 	Equal(t, err, nil)
 
 	Equal(t, len(test2.Array), 11)
@@ -1587,7 +1587,7 @@ func TestDecoderInterface(t *testing.T) {
 
 	var iface interface{}
 
-	d := NewDecoder()
+	d := NewDecoder[any]()
 
 	values := map[string][]string{
 		"": {"2"},
@@ -1597,13 +1597,13 @@ func TestDecoderInterface(t *testing.T) {
 
 	iface = &i
 
-	err := d.Decode(iface, values)
+	err := d.Decode(iface, values, nil)
 	Equal(t, err, nil)
 	Equal(t, i, 2)
 
 	iface = i
 
-	err = d.Decode(iface, values)
+	err = d.Decode(iface, values, nil)
 	NotEqual(t, err, nil)
 
 	_, ok := err.(*InvalidDecoderError)
@@ -1622,13 +1622,13 @@ func TestDecoderInterface(t *testing.T) {
 
 	iface = &tst
 
-	err = d.Decode(iface, values)
+	err = d.Decode(iface, values, nil)
 	Equal(t, err, nil)
 	Equal(t, tst.Value, "testVal")
 
 	iface = tst
 
-	err = d.Decode(iface, values)
+	err = d.Decode(iface, values, nil)
 	NotEqual(t, err, nil)
 
 	_, ok = err.(*InvalidDecoderError)
@@ -1649,8 +1649,8 @@ func TestDecoderPointerToPointer(t *testing.T) {
 
 	var tst *Test
 
-	d := NewDecoder()
-	err := d.Decode(&tst, values)
+	d := NewDecoder[any]()
+	err := d.Decode(&tst, values, nil)
 	Equal(t, err, nil)
 	Equal(t, tst.Value, "testVal")
 }
@@ -1670,10 +1670,10 @@ func TestDecoderExplicit(t *testing.T) {
 
 	var test Test
 
-	d := NewDecoder()
+	d := NewDecoder[any]()
 	d.SetMode(ModeExplicit)
 
-	err := d.Decode(&test, values)
+	err := d.Decode(&test, values, nil)
 	Equal(t, err, nil)
 	Equal(t, test.Name, "Joeybloggs")
 	Equal(t, test.Age, 0)
@@ -1694,10 +1694,10 @@ func TestDecoderStructWithJSONTag(t *testing.T) {
 
 	var test Test
 
-	d := NewDecoder()
+	d := NewDecoder[any]()
 	d.SetTagName("json")
 
-	err := d.Decode(&test, values)
+	err := d.Decode(&test, values, nil)
 	Equal(t, err, nil)
 	Equal(t, test.Name, "Joeybloggs")
 	Equal(t, test.Age, int(3))
@@ -1718,7 +1718,7 @@ func TestDecoderRegisterTagNameFunc(t *testing.T) {
 
 	var test Test
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 	decoder.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := fld.Tag.Get("json")
 
@@ -1729,7 +1729,7 @@ func TestDecoderRegisterTagNameFunc(t *testing.T) {
 		return name
 	})
 
-	err := decoder.Decode(&test, values)
+	err := decoder.Decode(&test, values, nil)
 	Equal(t, err, nil)
 	Equal(t, test.Value, "joeybloggs")
 	Equal(t, test.Ignore, "")
@@ -1749,13 +1749,13 @@ func TestDecoderEmbedModes(t *testing.T) {
 
 	var b B
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 
 	values := url.Values{
 		"Field": []string{"Value"},
 	}
 
-	err := decoder.Decode(&b, values)
+	err := decoder.Decode(&b, values, nil)
 	Equal(t, err, nil)
 	Equal(t, b.Field, "Value")
 	Equal(t, b.A.Field, "Value")
@@ -1765,7 +1765,7 @@ func TestDecoderEmbedModes(t *testing.T) {
 		"A.Field": []string{"A Val"},
 	}
 
-	err = decoder.Decode(&b, values)
+	err = decoder.Decode(&b, values, nil)
 	Equal(t, err, nil)
 	Equal(t, b.Field, "B Val")
 	Equal(t, b.A.Field, "A Val")
@@ -1784,8 +1784,8 @@ func TestInterfaceDecoding(t *testing.T) {
 		"Iface": []string{"1"},
 	}
 
-	decoder := NewDecoder()
-	err := decoder.Decode(&b, values)
+	decoder := NewDecoder[any]()
+	err := decoder.Decode(&b, values, nil)
 	Equal(t, err, nil)
 	Equal(t, b.Iface, "1")
 }
@@ -1803,7 +1803,7 @@ func TestDecodeArrayBug(t *testing.T) {
 		G [3]string
 	}
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 	err := decoder.Decode(&data, url.Values{
 		// Mixed types
 		"A":    {"10"},
@@ -1820,7 +1820,7 @@ func TestDecodeArrayBug(t *testing.T) {
 		"F":    {"10", "", "20"},
 		"G":    {"10"},
 		"G[2]": {"20"},
-	})
+	}, nil)
 	NotEqual(t, err, nil)
 	Equal(t, err.Error(), "Field Namespace:C ERROR:invalid array index 'q'")
 	Equal(t, data.A[0], "10")
@@ -1855,12 +1855,12 @@ func TestDecodeWithGoValuesCollection(t *testing.T) {
 		Age int `form:"age"`
 	}
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 	goValues := make(map[string]interface{})
 	err := decoder.Decode(&data, url.Values{
 		"name": {"John"},
 		"age":  {"30"},
-	}, goValues)
+	}, nil, goValues)
 	Equal(t, err, nil)
 	Equal(t, data.Name, "John")
 	Equal(t, data.Age, 30)
@@ -1882,12 +1882,12 @@ func TestDecodeWithCollectionFormat(t *testing.T) {
 		Age int `form:"age"`
 	}
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 	goValues := make(map[string]interface{})
 	err := decoder.Decode(&data, url.Values{
 		"names": {"John,Paul,Ringo,George"},
 		"age":   {"30"},
-	}, goValues)
+	}, nil, goValues)
 	Equal(t, err, nil)
 	Equal(t, data.Names, []string{"John", "Paul", "Ringo", "George"})
 	Equal(t, data.Age, 30)
@@ -1909,11 +1909,11 @@ func TestDecodeMissingDataWithCollectionFormat(t *testing.T) {
 		Age int `form:"age"`
 	}
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 	goValues := make(map[string]interface{})
 	err := decoder.Decode(&data, url.Values{
 		"age": {"30"},
-	}, goValues)
+	}, nil, goValues)
 	Equal(t, err, nil)
 	Nil(t, data.Names)
 	Equal(t, data.Age, 30)
@@ -1946,11 +1946,11 @@ func TestDecoder_Decode_textUnmarshal(t *testing.T) {
 		Value textMarshaler `form:"value"`
 	}
 
-	decoder := NewDecoder()
+	decoder := NewDecoder[any]()
 	goValues := make(map[string]interface{})
 	err := decoder.Decode(&data, url.Values{
 		"value": {"abc"},
-	}, goValues)
+	}, nil, goValues)
 
 	Equal(t, err, nil)
 	Equal(t, string(data.Value), "unmarshaled:abc")
@@ -1970,8 +1970,8 @@ func TestDecodeWithCustomFunc(t *testing.T) {
 		Age int `form:"age"`
 	}
 
-	decoder := NewDecoder()
-	decoder.RegisterFunc(func(s string) (interface{}, error) {
+	decoder := NewDecoder[any]()
+	decoder.RegisterFunc(func(s string, arg any) (interface{}, error) {
 		return name(s), nil
 	}, reflect.TypeOf(name("")))
 
@@ -1979,7 +1979,7 @@ func TestDecodeWithCustomFunc(t *testing.T) {
 	err := decoder.Decode(&data, url.Values{
 		"names": {"John", "Paul", "Ringo", "George"},
 		"age":   {"30"},
-	}, goValues)
+	}, nil, goValues)
 	NoError(t, err)
 	Equal(t, []name{"John", "Paul", "Ringo", "George"}, data.Names)
 	Equal(t, 30, data.Age)
@@ -1998,13 +1998,13 @@ func TestDecoder_RegisterCustomTypeFuncOnSlice(t *testing.T) {
 		Slice []customString `form:"slice"`
 	}
 
-	d := NewDecoder()
-	d.RegisterFunc(func(val string) (i interface{}, e error) {
+	d := NewDecoder[any]()
+	d.RegisterFunc(func(val string, arg any) (i interface{}, e error) {
 		return customString("custom" + val), nil
 	}, reflect.TypeOf(customString("")))
 
 	var v TestStruct
-	err := d.Decode(&v, url.Values{"slice": []string{"v1", "v2"}})
+	err := d.Decode(&v, url.Values{"slice": []string{"v1", "v2"}}, nil)
 	Equal(t, err, nil)
 	Equal(t, v.Slice, []customString{"customv1", "customv2"})
 }
@@ -2022,8 +2022,8 @@ func TestDecoder_EmptyArrayString(t *testing.T) {
 
 	v := new(T1)
 
-	d := NewDecoder()
-	err := d.Decode(v, in)
+	d := NewDecoder[any]()
+	err := d.Decode(v, in, nil)
 	Equal(t, err, nil)
 }
 
@@ -2039,8 +2039,8 @@ func TestDecoder_EmptyArrayBool(t *testing.T) {
 	}
 
 	v := new(T1)
-	d := NewDecoder()
-	err := d.Decode(v, in)
+	d := NewDecoder[any]()
+	err := d.Decode(v, in, nil)
 	Equal(t, err, nil)
 }
 
@@ -2054,8 +2054,8 @@ func TestDecoder_InvalidSliceIndex(t *testing.T) {
 	}
 
 	v := new(PostsRequest)
-	d := NewDecoder()
-	err := d.Decode(v, in)
+	d := NewDecoder[any]()
+	err := d.Decode(v, in, nil)
 	NotEqual(t, err, nil)
 	Equal(t, err.Error(), "Field Namespace:PostIds ERROR:invalid slice index ''")
 
@@ -2065,9 +2065,40 @@ func TestDecoder_InvalidSliceIndex(t *testing.T) {
 	}
 
 	v2 := new(PostsRequest2)
-	err = d.Decode(v2, in)
+	err = d.Decode(v2, in, nil)
 	Equal(t, err, nil)
 	Equal(t, len(v2.PostIds), 2)
 	Equal(t, v2.PostIds[0], "1")
 	Equal(t, v2.PostIds[1], "2")
+}
+
+func TestDecoder_DecodeFuncArgument(t *testing.T) {
+
+	type Data struct {
+		Int int
+	}
+
+	type PostsRequest struct {
+		Data Data `form:"data"`
+	}
+
+	in := url.Values{
+		"data": []string{"10"},
+	}
+
+	v := new(PostsRequest)
+	d := NewDecoder[map[string]Data]()
+
+	arguments := make(map[string]Data)
+	arguments["10"] = Data{
+		Int: 1,
+	}
+
+	d.RegisterFunc(func(s string, a map[string]Data) (interface{}, error) {
+		return a[s], nil
+	}, reflect.TypeOf(Data{}))
+	err := d.Decode(v, in, arguments)
+	NoError(t, err)
+	Equal(t, arguments["10"], v.Data)
+
 }

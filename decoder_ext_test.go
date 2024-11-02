@@ -22,7 +22,7 @@ func TestDecoder_Decode_deep_embed(t *testing.T) {
 		Header string `form:"header"`
 	}
 
-	dec := form.NewDecoder()
+	dec := form.NewDecoder[any]()
 
 	dec.SetMode(form.ModeExplicit)
 
@@ -30,7 +30,7 @@ func TestDecoder_Decode_deep_embed(t *testing.T) {
 	collect := make(map[string]interface{})
 	vals := url.Values{"deeply-embedded": []string{"baz"}, "header": []string{"foo"}, "writer-exported": []string{"bar"}}
 
-	require.NoError(t, dec.Decode(&s, vals, collect))
+	require.NoError(t, dec.Decode(&s, vals, nil, collect))
 	assert.Equal(t, "foo", s.Header)
 
 	assert.Equal(t, map[string]interface{}{"header": "foo"}, collect)
@@ -54,12 +54,12 @@ func TestDecoder_Decode_nested(t *testing.T) {
 	}
 	s := S{}
 	collect := make(map[string]interface{})
-	dec := form.NewDecoder()
+	dec := form.NewDecoder[any]()
 	dec.SetNamespacePrefix("[")
 	dec.SetNamespaceSuffix("]")
 	dec.SetMode(form.ModeExplicit)
 
-	require.NoError(t, dec.Decode(&s, vals, collect))
+	require.NoError(t, dec.Decode(&s, vals, nil, collect))
 	assert.Equal(t, "abc", s.Foo)
 	assert.Equal(t, 123, s.Deeper.Bar)
 	assert.Equal(t, true, s.Deeper.Deeper.Baz)
@@ -100,19 +100,19 @@ func TestDecoder_Decode_queryForm(t *testing.T) {
 	s := inputQueryObject{}
 	collect := make(map[string]interface{})
 
-	dec := form.NewDecoder()
+	dec := form.NewDecoder[any]()
 	dec.SetTagName("query")
 	dec.SetNamespacePrefix("[")
 	dec.SetNamespaceSuffix("]")
 	dec.SetMode(form.ModeExplicit)
-	dec.RegisterFunc(func(s string) (interface{}, error) {
+	dec.RegisterFunc(func(s string, arg any) (interface{}, error) {
 		var j jsonFilter
 		err := json.Unmarshal([]byte(s), &j)
 
 		return j, err
 	}, reflect.TypeOf(jsonFilter{}))
 
-	require.NoError(t, dec.Decode(&s, vals, collect))
+	require.NoError(t, dec.Decode(&s, vals, nil, collect))
 
 	expected := map[string]interface{}{
 		"deep_object_filter": deepObjectFilter{Bar: "sd"},

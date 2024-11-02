@@ -49,10 +49,10 @@ func TestRegisterSQLNullTypesEncodeFunc(t *testing.T) {
 func TestRegisterSQLNullTypesDecodeFunc(t *testing.T) {
 	t.Parallel()
 
-	d := form.NewDecoder()
+	d := form.NewDecoder[any]()
 	d.SetMode(form.ModeExplicit)
 	d.SetTagName("db")
-	form.RegisterSQLNullTypesDecodeFunc(d, "NULL", "null")
+	form.RegisterSQLNullTypesDecodeFunc[any](d, "NULL", "null")
 
 	v := map[string][]string{
 		"i": {"NULL"},
@@ -62,7 +62,7 @@ func TestRegisterSQLNullTypesDecodeFunc(t *testing.T) {
 	}
 	testNullTypes := TestNullTypes{}
 
-	err := d.Decode(&testNullTypes, v)
+	err := d.Decode(&testNullTypes, v, nil)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, testNullTypes.I.Valid, false)
 	assert.Equal(t, testNullTypes.F.Valid, false)
@@ -76,7 +76,7 @@ func TestRegisterSQLNullTypesDecodeFunc(t *testing.T) {
 		"b": {"false"},
 	}
 
-	err = d.Decode(&testNullTypes, v)
+	err = d.Decode(&testNullTypes, v, nil)
 	assert.Equal(t, err, nil)
 	assert.Equal(t, testNullTypes.I.Int64, int64(123))
 	assert.Equal(t, testNullTypes.F.Float64, 123.456)
