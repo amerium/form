@@ -8,10 +8,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/amerium/form"
+	"github.com/amerium/form/internal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/swaggest/form/v5"
-	"github.com/swaggest/form/v5/internal"
 )
 
 func TestDecoder_Decode_deep_embed(t *testing.T) {

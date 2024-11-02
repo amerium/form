@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/amerium/form"
 	assert "github.com/stretchr/testify/assert"
-	"github.com/swaggest/form/v5"
 )
 
 type TestNullTypes struct {

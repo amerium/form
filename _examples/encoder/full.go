@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/swaggest/form/v5"
+	"github.com/amerium/form"
 )
 
 // Address contains address information

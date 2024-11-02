@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/swaggest/form/v5"
+	"github.com/amerium/form"
 )
 
 // <form method="POST">
@@ -42,10 +42,10 @@ type User struct {
 }
 
 // use a single instance of Decoder, it caches struct info
-var decoder *form.Decoder
+var decoder *form.Decoder[any]
 
 func main() {
-	decoder = form.NewDecoder()
+	decoder = form.NewDecoder[any]()
 
 	// this simulates the results of http.Request's ParseForm() function
 	values := parseForm()
@@ -53,7 +53,7 @@ func main() {
 	var user User
 
 	// must pass a pointer
-	err := decoder.Decode(&user, values)
+	err := decoder.Decode(&user, values, nil)
 	if err != nil {
 		log.Panic(err)
 	}
