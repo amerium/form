@@ -180,9 +180,9 @@ func (s *structCacheMap) ps(mode Mode, typ reflect.Type, tagName string) (cs *ca
 		cf.sliceSeparator = sliceSeparator
 		cf.canSet = true
 
-		if fld.Type.Kind() == reflect.Interface && fld.Type.NumMethod() > 0 {
-			cf.canSet = false
-		}
+		//if fld.Type.Kind() == reflect.Interface && fld.Type.NumMethod() > 0 {
+		//	cf.canSet = false
+		//}
 
 		if cf.isAnonymous && !cf.isExported && fld.Type.Kind() == reflect.Ptr {
 			cf.canSet = false

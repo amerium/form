@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,7 +110,7 @@ func TestDecoder_Decode_queryForm(t *testing.T) {
 		err := json.Unmarshal([]byte(s), &j)
 
 		return j, err
-	}, jsonFilter{})
+	}, reflect.TypeOf(jsonFilter{}))
 
 	require.NoError(t, dec.Decode(&s, vals, collect))
 

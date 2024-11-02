@@ -144,13 +144,13 @@ func (d *Decoder) RegisterTagNameFunc(fn TagNameFunc) {
 // ADDITIONAL: if a struct type is registered, the function will only be called if a url.Value exists for
 // the struct and not just the struct fields eg. url.Values{"User":"Name%3Djoeybloggs"} will call the
 // custom type function with `User` as the type, however url.Values{"User.Name":"joeybloggs"} will not.
-func (d *Decoder) RegisterFunc(fn DecodeFunc, types ...interface{}) {
+func (d *Decoder) RegisterFunc(fn DecodeFunc, types ...reflect.Type) {
 	if d.customTypeFuncs == nil {
 		d.customTypeFuncs = map[reflect.Type]DecodeFunc{}
 	}
 
 	for _, t := range types {
-		d.customTypeFuncs[reflect.TypeOf(t)] = fn
+		d.customTypeFuncs[t] = fn
 	}
 }
 

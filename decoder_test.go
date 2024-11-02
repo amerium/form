@@ -707,7 +707,7 @@ func TestDecoderStruct(t *testing.T) {
 			decoder.SetTagName("form")
 			decoder.RegisterFunc(func(val string) (interface{}, error) {
 				return time.Parse("2006-01-02", val)
-			}, time.Time{})
+			}, reflect.TypeOf(time.Time{}))
 
 			var test TestStruct
 			test.ExistingMap = map[string]string{"existingkey": "existingvalue"}
@@ -931,7 +931,7 @@ func TestDecoderErrors(t *testing.T) {
 			decoder.SetMaxArraySize(4)
 			decoder.RegisterFunc(func(val string) (interface{}, error) {
 				return nil, errors.New("bad type conversion")
-			}, "")
+			}, reflect.TypeOf(""))
 
 			test := TestError{
 				OverFlowExistingArray: make([]int, 2),
@@ -1050,7 +1050,7 @@ func TestDecoderErrors(t *testing.T) {
 
 			decoder2.RegisterFunc(func(val string) (interface{}, error) {
 				return time.Parse("2006-01-02", val)
-			}, time.Time{})
+			}, reflect.TypeOf(time.Time{}))
 
 			errs = decoder2.Decode(&test2, values2)
 			NotEqual(t, errs, nil)
@@ -1973,7 +1973,7 @@ func TestDecodeWithCustomFunc(t *testing.T) {
 	decoder := NewDecoder()
 	decoder.RegisterFunc(func(s string) (interface{}, error) {
 		return name(s), nil
-	}, name(""))
+	}, reflect.TypeOf(name("")))
 
 	goValues := make(map[string]interface{})
 	err := decoder.Decode(&data, url.Values{
@@ -2001,7 +2001,7 @@ func TestDecoder_RegisterCustomTypeFuncOnSlice(t *testing.T) {
 	d := NewDecoder()
 	d.RegisterFunc(func(val string) (i interface{}, e error) {
 		return customString("custom" + val), nil
-	}, customString(""))
+	}, reflect.TypeOf(customString("")))
 
 	var v TestStruct
 	err := d.Decode(&v, url.Values{"slice": []string{"v1", "v2"}})
